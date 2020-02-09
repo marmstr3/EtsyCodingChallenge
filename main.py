@@ -16,7 +16,6 @@ Each entry is a list with the first member of the list being the unmeaningful te
 second member being the character(s) to replace the term with.
 """
 STOP_WORDS = ['THE',
-              'A',
               'BUT',
               'AN',
               'AND',
