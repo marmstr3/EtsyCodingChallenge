@@ -132,7 +132,6 @@ def remove_non_alpha(word):
         The input word with all non-alpha characters removed
 
     """
-    # this also removes web address, which is desired
     word = [character for character in word if character.isalpha()]
     word = ''.join(word)
     return word
@@ -190,8 +189,6 @@ def get_descriptions_and_titles(shop_listings):
         All of the words from the titles and descriptions of the shop listings.
 
     """
-    # return descriptions and titles as one list
-
     shop_words = []
     for listing in shop_listings:
 
@@ -257,7 +254,6 @@ def get_unique_terms_counts(words):
         the provided set of words.
 
     """
-    # words is a list of strings
     unique_words = set(words)
     word_counts = {}
     for word in unique_words:
@@ -285,7 +281,6 @@ def get_top_n_counts(words, n):
         ordered from most-often appearing word to least-often appearing word.
 
     """
-    # words is a list of strings
     top_words = []
     word_counts = get_unique_terms_counts(words)
     for _ in range(n):
