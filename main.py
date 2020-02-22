@@ -9,84 +9,22 @@ Created on Tue Feb  4
 import requests
 import json
 
-API_KEY = "9xs6lh5uglpq5zulq9vho71h"
-"""
-For efficiency, STOP_WORDS includes formatting strings to prevent multiple loops.
+with open("config.json", "r") as config_file:
+    config_data = json.load(config_file)
+    API_KEY = config_data['API_KEY']
+    STOP_WORDS = set(config_data['STOP_WORDS'])
+    
+"""For efficiency, STOP_WORDS includes formatting strings to prevent multiple loops.
 Each entry is a list with the first member of the list being the unmeaningful term, and the
 second member being the character(s) to replace the term with.
 """
-STOP_WORDS = ['THE',
-              'BUT',
-              'AN',
-              'AND',
-              'ARE',
-              'AS',
-              'AT',
-              'BE',
-              'BY',
-              'FOR',
-              'FROM',
-              'HAS',
-              'HAD',
-              'IF',
-              'IN',
-              'IS',
-              'IT',
-              'ITS',
-              'NO',
-              'OF',
-              'ON',
-              'OR',
-              'OUR',
-              'THAT',
-              'TO',
-              'WAS',
-              'WERE',
-              'WILL',
-              'WITH',
-              'QUOT', # This is a formatting character that must be handled
-              'YOU',
-              'YOUR',
-              'I',
-              'ME',
-              'MINE',
-              'MY',
-              'THIS',
-              'YES'
-              'A',
-              'B',
-              'C',
-              'D',
-              'E',
-              'F',
-              'G',
-              'H',
-              'I',
-              'J',
-              'K',
-              'L',
-              'M',
-              'N',
-              'O',
-              'P',
-              'Q',
-              'R',
-              'S',
-              'T',
-              'U',
-              'V',
-              'W',
-              'X',
-              'Y',
-              'Z'
-              ]
 
 # The below strings do not follow PEP-8 guidelines due to it causing
 # formatting errors in the command line interface.
 WELCOME_MESSAGE = "Welcome to the Etsy Top Terms Identifier. Press Enter to begin."
 USER_PROMPT = "Enter the name of an Etsy store you want analysed. Type 'exit' to quit the program: "
 CONNECTION_ERROR_MESSAGE = "It looks like you don't have internet. Please connect to the internet and press enter to try again."
-CANNOT_FIND_SHOP_ERROR_MESSAGE = "Sorry! We can't find that shop."
+CANNOT_FIND_SHOP_ERROR_MESSAGE = "Sorry! We can't find "
 RUNNING_ANALYSIS_MESSAGE = "Running Analysis... Depending on your internet connection, this may take a moment."
 
 
@@ -220,7 +158,8 @@ def get_shops_and_listings(shop_names):
     -------
     shops : LIST OF LISTS
         Each entry is a list pair of the shop_name and the list of the top 5
-        words for that shop with their word-count.
+        words for that shop with their word-count. If the shop was not found,
+        then index 1 of each list pair is None.
 
     """
     shops = []
@@ -232,6 +171,8 @@ def get_shops_and_listings(shop_names):
             shop_words = clean_words(shop_words, shop_name)
             top_5_words = get_top_n_counts(shop_words, 5)
             shops.append([shop_name, top_5_words])
+        else:
+            shops.append([shop_name, None])
 
     return shops
 
@@ -290,6 +231,22 @@ def get_top_n_counts(words, n):
     return top_words
 
 
+def format_analysis_for_console(shop):
+    
+    words_string = ""
+    for word_count in shop[1]:
+        words_string += f"{word_count}"
+        
+    return words_string
+
+def print_shop_analysis_to_console(shop):
+    
+    shop_name = shop[0]
+    words_string = format_analysis_for_console(shop)
+    print(f"Top 5 Words for {shop_name}:")
+    print(words_string)
+    print(" ")
+
 def print_analysis_to_console(shops):
     """
     Prints the results of the analysis to the command line interface
@@ -306,15 +263,27 @@ def print_analysis_to_console(shops):
 
     """
     for shop in shops:
-        words_string = ""
-        shop_name = shop[0]
-        for word_count in shop[1]:
-            words_string += f"{word_count}"
-        print(f"Top 5 Words for {shop_name}:")
-        print(words_string)
-        print(" ")
+        if shop[1]:
+            print_shop_analysis_to_console(shop)
+        else:
+            cannot_find_shop_error(shop[0])
 
+def cannot_find_shop_error(shop_name):
+    """
+    Prints an error to console when a provided shop is not found.
 
+    Parameters
+    ----------
+    shop_name : STRING
+        The name of the shop being analyzed.
+
+    Returns
+    -------
+    None.
+
+    """
+    error_message = CANNOT_FIND_SHOP_ERROR_MESSAGE + shop_name
+    print(error_message)
 
 def default_analysis():
     """
@@ -342,8 +311,7 @@ def default_analysis():
         print_analysis_to_console(shops)
         print("The above are the top 5 terms for 10 different Etsy Shops")
     else:
-        print(CANNOT_FIND_SHOP_ERROR_MESSAGE)
-
+        cannot_find_shop_error(shop_names)
 
 def custom_analysis(shop_names):
     """
@@ -364,7 +332,7 @@ def custom_analysis(shop_names):
     if shops:
         print_analysis_to_console(shops)
     else:
-        print(CANNOT_FIND_SHOP_ERROR_MESSAGE)
+        cannot_find_shop_error(shop_names)
 
 
 if __name__ == '__main__':
@@ -381,12 +349,15 @@ if __name__ == '__main__':
     procedure_command = input(USER_PROMPT)
 
     while procedure_command.upper() != 'EXIT':
-        try:
-            custom_analysis([procedure_command])
-        except TypeError:
-            # this catches the error if a shop doesn't exist or otherwise
-            # cannot be found
-            print(CANNOT_FIND_SHOP_ERROR_MESSAGE)
-        except requests.exceptions.ConnectionError:
-            print(CONNECTION_ERROR_MESSAGE)
-        procedure_command = input(USER_PROMPT)
+        if not procedure_command:
+            print("No user input detected. Please try again.")
+        else:
+            try:
+                custom_analysis([procedure_command])
+            except TypeError:
+                # this catches the error if a shop doesn't exist or otherwise
+                # cannot be found
+                print(CANNOT_FIND_SHOP_ERROR_MESSAGE)
+            except requests.exceptions.ConnectionError:
+                print(CONNECTION_ERROR_MESSAGE)
+            procedure_command = input(USER_PROMPT)
